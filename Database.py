@@ -29,7 +29,6 @@ class Database:
         #     response.update({'id error': id_is_unique})
 
         if username_is_unique is not True:
-            print('username')
             response.append(username_is_unique)
 
         if email_is_unique is not True:
@@ -61,7 +60,7 @@ class Database:
         row = self.cur.fetchone()
         # check if username exists in database
         if row is not None:
-            error = {'code': 409, 'message': 'username must be unique'}
+            error = {'status': 409, 'message': 'username must be unique'}
             return error
         # if username is unique return true
         return True
@@ -70,7 +69,7 @@ class Database:
         self.cur.execute("SELECT * from challenge WHERE email = %s", data['email'])
         row = self.cur.fetchone()
         if row is not None:
-            error = {'code': 409, 'message': 'email must be unique'}
+            error = {'status': 409, 'message': 'email must be unique'}
             return error
         return True
 
@@ -78,7 +77,7 @@ class Database:
         self.cur.execute("SELECT * from challenge WHERE id = %s", data['id'])
         row = self.cur.fetchone()
         if row is not None:
-            error = 'id is not unique'
+            error = {'status': 409, 'message': 'id is not unique'}
             return error
         return True
 
@@ -88,18 +87,18 @@ class Database:
         row = self.cur.fetchone()
 
         if row is not None:
-            code = {'code': '200'}
-            # create profile
-            profile = {'profile': {'id': row[0], 'username': row[1], 'email': row[2],
-                                    'password': row[3], 'zipcode': row[4]}}
-            # build response
-            response = {'success': [profile, code]}
-        else:
-            code = {'code': '404'}
-            message = {'message': 'no profile exists with id: '+id}
-            response = {'error': [message, code]}
 
-        return json.dumps(response)
+            # create profile
+            profile = {'id': row[0], 'username': row[1], 'email': row[2],
+                                    'password': row[3], 'zipcode': row[4]}
+            # build response
+            response = {'profile': profile, 'status': 200}
+            type = 'success'
+        else:
+            response = {'message': 'no profile exists with id: '+id, 'status': 404}
+            type = 'error'
+
+        return json.jsonify({type: response})
 
     def close(self):
         self.cur.close()
